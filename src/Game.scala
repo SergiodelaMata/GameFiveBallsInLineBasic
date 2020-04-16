@@ -60,7 +60,6 @@ object Game{
       val matrixRemoveLines = paintListPosMatrix(getChanges(posFinal, matrixChangePos),"-",matrixChangePos)
       val counterPoints = addPoints(matrix, matrixRemoveLines, counter)
       val matrixNextStep = getMatrixNextStep(matrix, matrixRemoveLines)
-      //executeGame(getMatrixNextStep(matrix, matrixRemoveLines),addPoints(matrix, matrixRemoveLines, counter),step+1)
       executeGame(matrixNextStep,addPoints(matrixRemoveLines, matrixNextStep, counterPoints),step+1)
     }
     else counter
@@ -412,7 +411,7 @@ object Game{
   }
   //Devuelve el número de bolas seguidas de un mismo color a partir de una posición en una columna
   def getBallsColumn(position: List[Int], matrix: List[List[String]]): Int = {
-    position.head match { //Se compara el número de Row
+    position.head match { //Se compara el número de columna
       case 0 => 1 + getBallsColUpDown(List(position.head + 1,(position.tail).head), matrix, getValueListOfLists(position.head, (position.tail).head, matrix))
       case 8 => 1 + getBallsColDownUp(List(position.head - 1,(position.tail).head), matrix, getValueListOfLists(position.head, (position.tail).head, matrix))
       case _ => getBallsColUpDown(List(position.head + 1,(position.tail).head), matrix, getValueListOfLists(position.head, (position.tail).head, matrix)) + 1 + getBallsColDownUp(List(position.head - 1,(position.tail).head), matrix, getValueListOfLists(position.head, (position.tail).head, matrix))
