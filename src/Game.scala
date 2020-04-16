@@ -70,9 +70,9 @@ object Game{
   //Obtiene la posición inicial y la posición final para una bola
   def getListPos(matrix:List[List[String]]): List[List[Int]]=
   {
-    val posInicial = pedirPosInicial(matrix)
+    val posInitial = pedirPosInicial(matrix)
     val posFinal = pedirPosFinal(matrix)
-    if(isPath(posInicial,posFinal,matrix,0)) List(posInicial,posFinal)
+    if(isPath(posInitial,posFinal,matrix,Nil,0,false)) List(posInitial,posFinal)
     else
     {
       println("Movimiento Inválido. No hay camino entre las posiciones indicadas. Introduzca otras posiciones.")
@@ -177,31 +177,57 @@ object Game{
     }
   }
   //Verifica la existencia de un camino entre dos posiciones
-  def isPath(posInitial: List[Int],posFinal: List[Int], matrix: List[List[String]],counter: Int): Boolean ={
-    if(counter <150 &&((!(posInitial.head.!=(posFinal.head) && !(!(posInitial.tail).head.!=((posFinal.tail).head))))||(isFreePos(posInitial.head, (posInitial.tail).head, matrix) && isFreePos(posFinal.head, (posFinal.tail).head, matrix))))
+  def isPath(posInitial: List[Int],posFinal: List[Int], matrix: List[List[String]], listPos: List[List[Int]], counter: Int, verify: Boolean): Boolean ={
+    if(!containPosition(listPos, posInitial) && counter < 20)//Comprueba si la posición ya ha sido posición estudiada y si contador del nivel del árbol de búsqueda es inferior al nivel máximo que se ha establecido
     {
-      if(!(posInitial.head.!=(posFinal.head) && !(!(posInitial.tail).head.!=((posFinal.tail).head))))
+      if((posInitial.head.!=(posFinal.head) || ((posInitial.tail).head.!=((posFinal.tail).head))))// Comprueba si son posiciones distintas o iguales
       {
-        true
-      }
-      else
-      {
-        if(isPath(List(posInitial.head,(posInitial.tail).head-1), posFinal,matrix,counter+1)) true
-        else
+        //Comprueba que la posición sea encuentra en rango además de estudiar si hay una bola en la posición estudiada o no
+        if(validPath(posInitial, verify, matrix)  && isFreePos(posInitial.head, (posInitial.tail).head, matrix) && isFreePos(posFinal.head, (posFinal.tail).head, matrix))
         {
-          if(isPath(List(posInitial.head,(posInitial.tail).head+1), posFinal,matrix,counter+1)) true
+          //Estudio de posición a la izquierda
+          if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head-1)) && isPath(List(posInitial.head,(posInitial.tail).head-1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
           else
           {
-            if(isPath(List(posInitial.head-1,(posInitial.tail).head), posFinal,matrix,counter+1)) true
+            //Estudio de posición a la derecha
+            if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head,(posInitial.tail).head+1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
             else
             {
-              isPath(List(posInitial.head+1,(posInitial.tail).head), posFinal,matrix,counter+1)
+              //Estudio de posición de debajo
+              if(!containPosition(listPos, List(posInitial.head-1,(posInitial.tail).head)) && isPath(List(posInitial.head-1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+              else
+              {
+                //Estudio de posición de encima
+                if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head+1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+                else false
+              }
             }
           }
         }
+        else false
+      }
+      else
+      {
+        if(verify) true //Se ha debido de pasar por otras posiciones para llegar a que la posición inicial y la posición final son iguales
+        else false //Al inicio de la ejecución de la función, la posición inicial y la posición final son iguales
       }
     }
     else false
+  }
+  //Comprueba dependiendo de si es la posición inicial o se ha ido recolocando la bola, si dicha posición ya contenía o no una bola dependiendo de la situación
+  def validPath(posInitial: List[Int], verify: Boolean, matrix: List[List[String]]): Boolean ={
+    if(verify)//Ya se ha desaplazado desde la posición inicial al menos una vez
+    {
+      //Estudio de si la posición estudiada está vacía o no
+      if(isEqual(getValueListOfLists(posInitial.head, (posInitial.tail).head, matrix), "-")) true
+      else false
+    }
+    else
+    {
+      //Estudio de si la posición estudiada está vacía o no
+      if(!isEqual(getValueListOfLists(posInitial.head, (posInitial.tail).head, matrix), "-")) true
+      else false
+    }
   }
   //Comprueba si una posición se encuentra libre por algún camino (derecha, izquierda, arriba o abajo)
   def isFreePos(coordX: Int, coordY: Int, matrix: List[List[String]]): Boolean={
@@ -231,7 +257,7 @@ object Game{
   }
   //Rellena de forma aleatoria el tablero con un número de bolas pasado por parámetro
   def fillMatrix(numBolas: Int, matrix: List[List[String]]): List[List[String]] = {
-    if(numBolas != 0) fillMatrix(numBolas - 1, fillRandomPos(matrix, getValueList(random(0, getListColors().length), getListColors())))
+    if(numBolas != 0 && getListFreePositions(matrix, 0).!=(0)) fillMatrix(numBolas - 1, fillRandomPos(matrix, getValueList(random(0, getListColors().length), getListColors())))
     else matrix
   }
   //Rellena una posición del tablero de forma aleatoria
