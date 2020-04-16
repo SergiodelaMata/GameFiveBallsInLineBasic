@@ -7,7 +7,7 @@ import java.time.LocalDate
 
 object Game{
   def main(args: Array[String]): Unit = {
-    showResult(executeGame(fillMatrix(9,generateMatrix(9,9)),1,1))
+    showResult(executeGame(fillMatrix(9,generateMatrix(9,9)),0,1))
   }
   //Ejecuta el menú del juego
   def executeMenu(counter: Int){
@@ -18,7 +18,7 @@ object Game{
     val value = scala.io.StdIn.readInt()
     value match { //Se compara la opción seleccionada
       case 0 => println("Gracias por jugar.")
-      case 1 => showResult(executeGame(fillMatrix(9,generateMatrix(9,9)),1,1))
+      case 1 => showResult(executeGame(fillMatrix(9,generateMatrix(9,9)),0,1))
       case 2 => savePoints(counter)
       case _ => errorOptionSelected(counter: Int)
     }
