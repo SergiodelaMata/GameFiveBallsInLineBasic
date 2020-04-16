@@ -5,7 +5,6 @@ import java.io._
 import java.util.Calendar
 import java.time.LocalDate
 
-//object Game extends App{
 object Game{
   def main(args: Array[String]): Unit = {
     showResult(executeGame(fillMatrix(9,generateMatrix(9,9)),1,1))
@@ -50,7 +49,7 @@ object Game{
   }
   //Devuelve los puntos finales de la partida y realiza la ejecución del juego
   def executeGame(matrix:List[List[String]], counter: Int,step: Int): Int ={
-    if(getListFreePositions(matrix,0).!=(0))
+    if(getListFreePositions(matrix,0).length.!=(0))
     {
       println("Tablero paso " + step + ":")
       showMatrix(matrix,0)
@@ -59,7 +58,10 @@ object Game{
       val posFinal = (listPos.tail).head
       val matrixChangePos = paintMatrix(posFinal.head, (posFinal.tail).head, paintMatrix(posInitial.head, (posInitial.tail).head, matrix, "-"), getValueListOfLists(posInitial.head,(posInitial.tail).head,matrix))
       val matrixRemoveLines = paintListPosMatrix(getChanges(posFinal, matrixChangePos),"-",matrixChangePos)
-      executeGame(getMatrixNextStep(matrix, matrixRemoveLines),addPoints(matrix, matrixRemoveLines, counter),step+1)
+      val counterPoints = addPoints(matrix, matrixRemoveLines, counter)
+      val matrixNextStep = getMatrixNextStep(matrix, matrixRemoveLines)
+      //executeGame(getMatrixNextStep(matrix, matrixRemoveLines),addPoints(matrix, matrixRemoveLines, counter),step+1)
+      executeGame(matrixNextStep,addPoints(matrixRemoveLines, matrixNextStep, counterPoints),step+1)
     }
     else counter
   }
@@ -183,22 +185,22 @@ object Game{
       if((posInitial.head.!=(posFinal.head) || ((posInitial.tail).head.!=((posFinal.tail).head))))// Comprueba si son posiciones distintas o iguales
       {
         //Comprueba que la posición sea encuentra en rango además de estudiar si hay una bola en la posición estudiada o no
-        if(validPath(posInitial, verify, matrix)  && isFreePos(posInitial.head, (posInitial.tail).head, matrix) && isFreePos(posFinal.head, (posFinal.tail).head, matrix))
+        if(validPath(posInitial, verify, matrix))
         {
           //Estudio de posición a la izquierda
-          if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head-1)) && isPath(List(posInitial.head,(posInitial.tail).head-1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+          if(!isOutOfRangePos(posInitial.head, (posInitial.tail).head-1) && !containPosition(listPos, List(posInitial.head,(posInitial.tail).head-1)) && isPath(List(posInitial.head,(posInitial.tail).head-1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
           else
           {
             //Estudio de posición a la derecha
-            if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head,(posInitial.tail).head+1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+            if(!isOutOfRangePos(posInitial.head, (posInitial.tail).head+1) && !containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head,(posInitial.tail).head+1), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
             else
             {
               //Estudio de posición de debajo
-              if(!containPosition(listPos, List(posInitial.head-1,(posInitial.tail).head)) && isPath(List(posInitial.head-1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+              if(!isOutOfRangePos(posInitial.head-1, (posInitial.tail).head) && !containPosition(listPos, List(posInitial.head-1,(posInitial.tail).head)) && isPath(List(posInitial.head-1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
               else
               {
                 //Estudio de posición de encima
-                if(!containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head+1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
+                if(!isOutOfRangePos(posInitial.head+1, (posInitial.tail).head) && !containPosition(listPos, List(posInitial.head,(posInitial.tail).head+1)) && isPath(List(posInitial.head+1,(posInitial.tail).head), posFinal, matrix, listPos ::: List(posInitial), counter+1, true)) true
                 else false
               }
             }
@@ -257,16 +259,21 @@ object Game{
   }
   //Rellena de forma aleatoria el tablero con un número de bolas pasado por parámetro
   def fillMatrix(numBolas: Int, matrix: List[List[String]]): List[List[String]] = {
-    if(numBolas != 0 && getListFreePositions(matrix, 0).!=(0)) fillMatrix(numBolas - 1, fillRandomPos(matrix, getValueList(random(0, getListColors().length), getListColors())))
+    if(numBolas != 0 && getListFreePositions(matrix, 0).length.!=(0)) fillMatrix(numBolas - 1, fillRandomPos(matrix, getValueList(random(0, getListColors().length), getListColors())))
     else matrix
+  }
+  //Devuelve la posición de una posición de la posiciones del tablero
+  def getPosition(listPos: List[List[Int]], pos: Int): List[Int]={
+    if(pos.!=(0)) getPosition(listPos.tail, pos-1)
+    else listPos.head
   }
   //Rellena una posición del tablero de forma aleatoria
   def fillRandomPos(matrix: List[List[String]], color : String): List[List[String]] = {
     val listPosEmpty = getListFreePositions(matrix, 0)
-    val position = listPosEmpty(random(0, listPosEmpty.size))
+    val position = getPosition(listPosEmpty,random(0, listPosEmpty.size))
     val posX = position.head
     val posY = (position.tail).head
-    if(isEmptyPosListOfLists(posX, posY, matrix)) paintMatrix(posX, posY, matrix, color)
+    if(isEmptyPosListOfLists(posX, posY, matrix)) paintListPosMatrix(getChanges(List(posX,posY), paintMatrix(posX, posY, matrix, color)),"-",paintMatrix(posX, posY, matrix, color))
     else fillRandomPos(matrix, color)
   }
   //Pinta una lista de posiciones de un color
